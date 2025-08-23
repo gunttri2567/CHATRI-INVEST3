@@ -140,6 +140,19 @@
       }catch(e){ console.error(e); alert("แชร์ไม่สำเร็จ"); }
     }
 
+    function previewFlex(){
+      const raw = document.getElementById("flexjson").value;
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch { parsed = null; }
+      if(parsed){
+        document.getElementById("previewArea").innerHTML =
+          '<img src="'+(parsed.hero?.url || 'https://via.placeholder.com/300x200?text=Preview')+'" class="img-fluid rounded">';
+      } else {
+        document.getElementById("previewArea").innerHTML =
+          '<p class="text-danger">JSON ไม่ถูกต้อง</p>';
+      }
+    }
+
     // ---------------- LIFF Init ----------------
     async function main(){
       await liff.init({ liffId: LIFF_ID });
