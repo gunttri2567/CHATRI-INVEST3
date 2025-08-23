@@ -29,23 +29,17 @@
     .flex-hero img { width: 100%; display: block; }
     .section { padding: 12px; }
     .flex-footer { border-top: 1px solid #eee; }
-    /* กล่อง (box) */
     .box { display: flex; gap: 8px; }
     .box.vertical { flex-direction: column; }
     .box.horizontal { flex-direction: row; align-items: center; }
     .box.baseline { flex-direction: row; align-items: baseline; }
-    /* ข้อความ */
     .text { word-break: break-word; line-height: 1.4; }
-    /* ไซส์ข้อความแบบประมาณ */
     .t-xs{font-size:12px;} .t-sm{font-size:14px;} .t-md{font-size:16px;}
     .t-lg{font-size:18px;} .t-xl{font-size:20px;} .t-xxl{font-size:22px;}
-    /* ปุ่ม */
     .btn-flex { display:inline-block; padding:10px 14px; border-radius:10px; text-decoration:none; border:1px solid #0d6efd; color:#0d6efd; }
     .btn-flex.primary { background:#0d6efd; color:#fff; border-color:#0d6efd; }
     .btn-flex.link { border: none; padding: 0; color:#0d6efd; }
-    /* คั่น */
     .sep { border-top:1px solid #e5e7eb; margin:6px 0; }
-    /* ไอคอน */
     .icon { width: 20px; height: 20px; display:inline-block; }
   </style>
 </head>
@@ -75,6 +69,12 @@
 }</textarea>
       </div>
 
+      <!-- ช่อง altText -->
+      <div class="mb-2">
+        <label for="altText" class="form-label">altText</label>
+        <input type="text" class="form-control" id="altText" placeholder="ข้อความสั้น ๆ ที่จะแสดงแทน Flex Message">
+      </div>
+
       <!-- ช่องแสดง URL -->
       <div class="input-group mb-3">
         <input type="text" class="form-control" id="demo" placeholder="Ctrl+C > Copy liff url.">
@@ -100,14 +100,14 @@
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    // ---------- Utility: แปลงค่า/สไตล์ทั่วไป ----------
+    // ---------- Utility: ----------
     function applyCommonStyle(el, node = {}) {
       if (!node) return;
       if (node.margin) el.style.marginTop = mapSpacing(node.margin);
       if (node.backgroundColor) el.style.backgroundColor = node.backgroundColor;
       if (node.color) el.style.color = node.color;
-      if (node.align) el.style.textAlign = node.align; // สำหรับ text
-      if (node.gravity) { // top/center/bottom → approx
+      if (node.align) el.style.textAlign = node.align;
+      if (node.gravity) {
         if (node.gravity === 'center') el.style.alignSelf = 'center';
         if (node.gravity === 'bottom') el.style.alignSelf = 'flex-end';
       }
@@ -116,7 +116,6 @@
         el.addEventListener('click', () => window.open(node.action.uri, '_blank'));
       }
     }
-
     function mapTextSize(size) {
       const m = { xs:'t-xs', sm:'t-sm', md:'t-md', lg:'t-lg', xl:'t-xl', xxl:'t-xxl' };
       return m[size] || 't-md';
@@ -125,289 +124,97 @@
       const m = { none:'0px', xs:'4px', sm:'6px', md:'8px', lg:'12px', xl:'16px', xxl:'20px' };
       return m[sp] || '8px';
     }
-    function objFit(mode) {
-      return mode === 'contain' ? 'contain' : 'cover';
-    }
+    function objFit(mode) { return mode === 'contain' ? 'contain' : 'cover'; }
 
-    // ---------- เรนเดอร์ Flex (รองรับ bubble / carousel) ----------
+    // ---------- Render Flex ----------
     function renderFromTextarea() {
       const raw = document.getElementById('flexjson').value.trim();
       let json;
-      try {
-        json = JSON.parse(raw);
-      } catch (e) {
-        throw new Error('JSON ไม่ถูกต้อง');
-      }
-
-      // รองรับทั้งข้อความที่เป็น message {type:flex,...} หรือ contents ตรง ๆ (bubble/carousel)
+      try { json = JSON.parse(raw); } catch { throw new Error('JSON ไม่ถูกต้อง'); }
       if (json.type === 'flex' && json.contents) return json.contents;
       if (json.type === 'bubble' || json.type === 'carousel') return json;
-
-      throw new Error('รองรับเฉพาะชนิด bubble / carousel หรือ message.type="flex" ที่มี contents');
+      throw new Error('รองรับเฉพาะ bubble / carousel หรือ message.type="flex"');
     }
-
     function renderFlexTo(preview) {
       preview.innerHTML = '';
-
       const contents = renderFromTextarea();
       if (contents.type === 'carousel') {
-        (contents.contents || []).forEach(bubble => {
-          preview.appendChild(renderBubble(bubble));
-        });
+        (contents.contents || []).forEach(bubble => preview.appendChild(renderBubble(bubble)));
       } else if (contents.type === 'bubble') {
         preview.appendChild(renderBubble(contents));
       } else {
         preview.innerHTML = "<p class='text-danger'>ชนิดไม่รองรับ</p>";
       }
     }
-
     function renderBubble(bubble) {
-      const wrap = document.createElement('div');
-      wrap.className = 'flex-bubble';
-
-      // HERO
-      if (bubble.hero) {
-        wrap.appendChild(renderComponent(bubble.hero, true));
-      }
-      // HEADER
-      if (bubble.header) {
-        const sec = document.createElement('div');
-        sec.className = 'section';
-        sec.appendChild(renderComponent(bubble.header));
-        wrap.appendChild(sec);
-      }
-      // BODY
-      if (bubble.body) {
-        const sec = document.createElement('div');
-        sec.className = 'section';
-        sec.appendChild(renderComponent(bubble.body));
-        wrap.appendChild(sec);
-      }
-      // FOOTER
-      if (bubble.footer) {
-        const sec = document.createElement('div');
-        sec.className = 'section flex-footer';
-        sec.appendChild(renderComponent(bubble.footer));
-        wrap.appendChild(sec);
-      }
-
+      const wrap = document.createElement('div'); wrap.className = 'flex-bubble';
+      if (bubble.hero) wrap.appendChild(renderComponent(bubble.hero, true));
+      if (bubble.header) { const sec = document.createElement('div'); sec.className = 'section'; sec.appendChild(renderComponent(bubble.header)); wrap.appendChild(sec); }
+      if (bubble.body) { const sec = document.createElement('div'); sec.className = 'section'; sec.appendChild(renderComponent(bubble.body)); wrap.appendChild(sec); }
+      if (bubble.footer) { const sec = document.createElement('div'); sec.className = 'section flex-footer'; sec.appendChild(renderComponent(bubble.footer)); wrap.appendChild(sec); }
       return wrap;
     }
-
-    // ---------- Render node (recursive) ----------
     function renderComponent(node, isHero = false) {
       if (!node) return document.createDocumentFragment();
-
       switch (node.type) {
-        case 'box': {
-          const div = document.createElement('div');
-          const layout = node.layout || 'vertical';
-          div.className = `box ${layout}`;
-          applyCommonStyle(div, node);
-          (node.contents || []).forEach(ch => div.appendChild(renderComponent(ch)));
-          return div;
-        }
-        case 'text': {
-          const t = document.createElement('div');
-          t.className = `text ${mapTextSize(node.size)}`;
-          t.textContent = node.text ?? '';
-          if (node.weight === 'bold') t.style.fontWeight = '700';
-          if (node.align) t.style.textAlign = node.align;
-          if (node.wrap === true) t.style.whiteSpace = 'normal';
-          else t.style.whiteSpace = 'nowrap';
-          if (node.decoration === 'underline') t.style.textDecoration = 'underline';
-          applyCommonStyle(t, node);
-          return t;
-        }
-        case 'image': {
-          const c = document.createElement('div');
-          if (isHero) c.className = 'flex-hero';
-          const img = document.createElement('img');
-          img.src = node.url;
-          img.loading = 'lazy';
-          img.style.width = '100%';
-          img.style.height = 'auto';
-          img.style.objectFit = objFit(node.aspectMode);
-          applyCommonStyle(img, node);
-          // รองรับ action.uri
-          if (node.action && node.action.type === 'uri') {
-            img.style.cursor = 'pointer';
-            img.addEventListener('click', () => window.open(node.action.uri, '_blank'));
-          }
-          c.appendChild(img);
-          return c;
-        }
-        case 'button': {
-          // รองรับ style: primary/link; action: uri
-          const a = document.createElement('a');
-          const label = (node.action && node.action.label) ? node.action.label : (node.label || 'Button');
-          a.textContent = label;
-          a.href = (node.action && node.action.uri) ? node.action.uri : 'javascript:void(0)';
-          a.target = '_blank';
-          const style = (node.style || 'secondary').toLowerCase();
-          a.className = `btn-flex ${style === 'primary' ? 'primary' : (style === 'link' ? 'link' : '')}`;
-          applyCommonStyle(a, node);
-          return a;
-        }
-        case 'separator': {
-          const hr = document.createElement('div');
-          hr.className = 'sep';
-          applyCommonStyle(hr, node);
-          return hr;
-        }
-        case 'spacer': {
-          const sp = document.createElement('div');
-          const map = { xs:4, sm:6, md:8, lg:12, xl:16, xxl:20 };
-          sp.style.height = (map[node.size] || 8) + 'px';
-          return sp;
-        }
-        case 'filler': {
-          const f = document.createElement('div');
-          f.style.flex = '1 1 auto';
-          return f;
-        }
-        case 'icon': {
-          const i = document.createElement('img');
-          i.className = 'icon';
-          i.src = node.url;
-          return i;
-        }
-        default: {
-          // ไม่รู้จัก type → แสดงเป็น JSON สั้น ๆ เพื่อ debug
-          const pre = document.createElement('pre');
-          pre.textContent = `[unsupported ${node.type}]`;
-          pre.style.fontSize = '12px';
-          pre.style.color = '#999';
-          return pre;
-        }
+        case 'box': { const d=document.createElement('div'); d.className=`box ${node.layout||'vertical'}`; applyCommonStyle(d,node); (node.contents||[]).forEach(ch=>d.appendChild(renderComponent(ch))); return d; }
+        case 'text': { const t=document.createElement('div'); t.className=`text ${mapTextSize(node.size)}`; t.textContent=node.text??''; if(node.weight==='bold')t.style.fontWeight='700'; if(node.align)t.style.textAlign=node.align; if(node.wrap===true)t.style.whiteSpace='normal'; else t.style.whiteSpace='nowrap'; if(node.decoration==='underline')t.style.textDecoration='underline'; applyCommonStyle(t,node); return t; }
+        case 'image': { const c=document.createElement('div'); if(isHero)c.className='flex-hero'; const img=document.createElement('img'); img.src=node.url; img.loading='lazy'; img.style.width='100%'; img.style.objectFit=objFit(node.aspectMode); applyCommonStyle(img,node); if(node.action&&node.action.type==='uri'){img.style.cursor='pointer'; img.addEventListener('click',()=>window.open(node.action.uri,'_blank'));} c.appendChild(img); return c; }
+        case 'button': { const a=document.createElement('a'); const label=(node.action&&node.action.label)?node.action.label:(node.label||'Button'); a.textContent=label; a.href=(node.action&&node.action.uri)?node.action.uri:'javascript:void(0)'; a.target='_blank'; const style=(node.style||'secondary').toLowerCase(); a.className=`btn-flex ${style==='primary'?'primary':(style==='link'?'link':'')}`; applyCommonStyle(a,node); return a; }
+        case 'separator': { const hr=document.createElement('div'); hr.className='sep'; applyCommonStyle(hr,node); return hr; }
+        case 'spacer': { const sp=document.createElement('div'); const map={xs:4,sm:6,md:8,lg:12,xl:16,xxl:20}; sp.style.height=(map[node.size]||8)+'px'; return sp; }
+        case 'filler': { const f=document.createElement('div'); f.style.flex='1 1 auto'; return f; }
+        case 'icon': { const i=document.createElement('img'); i.className='icon'; i.src=node.url; return i; }
+        default: { const pre=document.createElement('pre'); pre.textContent=`[unsupported ${node.type}]`; pre.style.fontSize='12px'; pre.style.color='#999'; return pre; }
       }
     }
 
-    // ---------- ส่วนของคุณ (เดิม) ----------
-    function js_onload_code() {
-      var myParam = window.location.search;
-      if (myParam.includes("flexid=")) {
-        var exc = myParam.split('flexid=')[1].split('&')[0];
-        const xurl = "https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec";
-        var xmlhttp = new XMLHttpRequest();
-        var theUrl = xurl + '?flexid=' + exc;
-        xmlhttp.open('GET', theUrl);
-        xmlhttp.send();
-        xmlhttp.onreadystatechange = function() {
-          if (this.readyState == 4 && this.status == 200) {
-            var jsonResponse = JSON.parse(this.responseText);
-            let decoded = window.atob(jsonResponse.desc);
-            document.getElementById("flexjson").value = decoded;
-            // โหลดเสร็จแล้วพรีวิวให้เลย
-            safePreview();
-          }
-        }
-      }
-    }
-
-    // wrap สำหรับ share: คืน message object เสมอ
+    // ---------- AltText + Share ----------
     function buildFlexMessageFromTextarea() {
       const raw = document.getElementById("flexjson").value;
-      let parsed;
-      try { parsed = JSON.parse(raw); } catch { return "failed"; }
-
+      const alt = document.getElementById("altText").value.trim() || "Flex Preview";
+      let parsed; try { parsed = JSON.parse(raw); } catch { return "failed"; }
       if (parsed.type === 'flex' && parsed.contents) {
-        // เป็น message อยู่แล้ว
-        if (!parsed.altText) parsed.altText = "Flex Preview";
+        if (!parsed.altText) parsed.altText = alt;
         return parsed;
       }
       if (parsed.type === 'bubble' || parsed.type === 'carousel') {
-        return { type: 'flex', altText: 'Flex Preview', contents: parsed };
+        return { type: 'flex', altText: alt, contents: parsed };
       }
       return "failed";
     }
+    function myFunction(){ return buildFlexMessageFromTextarea(); }
 
-    function myFunction() { // ใช้ตรวจ JSON เหมือนเดิม (คงชื่อไว้)
-      return buildFlexMessageFromTextarea();
-    }
-
-    // ---------- ปุ่มต่าง ๆ (เดิม) ----------
     function saveShare() {
       var sflex = document.getElementById("flexjson").value;
       let code = window.btoa(sflex);
       let lid = "lid" + Date.now();
       document.getElementById("demo").value = "https://liff.line.me/2000581772-J4jdMX8q/?flexid=" + lid;
-
       const xurl = "https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec";
-      var xmlhttp = new XMLHttpRequest();
-      xmlhttp.open("POST", xurl);
-      xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      var xmlhttp=new XMLHttpRequest();
+      xmlhttp.open("POST",xurl); xmlhttp.setRequestHeader("Content-Type","application/json;charset=UTF-8");
       xmlhttp.send(JSON.stringify({ "lid": lid, "desc": code }));
-      xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-          var jsonResponse = JSON.parse(this.responseText);
-          alert("บันทึกแล้ว: " + jsonResponse.desc);
-        }
-      }
+      xmlhttp.onreadystatechange=function(){ if(this.readyState==4&&this.status==200){ var jsonResponse=JSON.parse(this.responseText); alert("บันทึกแล้ว: "+jsonResponse.desc); } }
     }
-
     async function sendShare() {
       const msg = buildFlexMessageFromTextarea();
       if (msg === "failed") { alert("JSON ไม่ถูกต้อง"); return; }
-      try {
-        const result = await liff.shareTargetPicker([msg]);
-        if (result) alert(`[${result.status}] Message sent!`);
-        else alert("ShareTargetPicker ถูกยกเลิก");
-      } catch (e) {
-        console.error(e);
-        alert("แชร์ไม่สำเร็จ");
-      }
+      try { const result = await liff.shareTargetPicker([msg]); if (result) alert(`[${result.status}] Message sent!`); else alert("ShareTargetPicker ถูกยกเลิก"); }
+      catch(e){ console.error(e); alert("แชร์ไม่สำเร็จ"); }
     }
-
-    function copyUrl() {
-      let copyText = document.getElementById("demo");
-      copyText.select();
-      document.execCommand("copy");
-      alert("Copied URL: " + copyText.value);
-    }
-
-    // ---------- Preview Flex ----------
-    function previewFlex() {
-      const preview = document.getElementById('previewArea');
-      try {
-        renderFlexTo(preview);
-      } catch (e) {
-        preview.innerHTML = `<p class="text-danger">${e.message}</p>`;
-      }
-    }
-
-    // พรีวิวอย่างปลอดภัย (ไม่เด้ง alert)
-    function safePreview() {
-      const preview = document.getElementById('previewArea');
-      try { renderFlexTo(preview); }
-      catch (e) { preview.innerHTML = `<p class="text-muted">พิมพ์/วาง JSON แล้วกด Preview</p>`; }
-    }
+    function copyUrl(){ let copyText=document.getElementById("demo"); copyText.select(); document.execCommand("copy"); alert("Copied URL: "+copyText.value); }
+    function previewFlex(){ const preview=document.getElementById('previewArea'); try{ renderFlexTo(preview); }catch(e){ preview.innerHTML=`<p class="text-danger">${e.message}</p>`; } }
+    function safePreview(){ const preview=document.getElementById('previewArea'); try{ renderFlexTo(preview); } catch(e){ preview.innerHTML=`<p class="text-muted">พิมพ์/วาง JSON แล้วกด Preview</p>`; } }
 
     // ---------- LIFF Init ----------
     async function main() {
       await liff.init({ liffId: "2000581772-J4jdMX8q" });
-      if (liff.isLoggedIn()) {
-        js_onload_code();
-        // auto preview จากค่าเริ่มต้น
-        safePreview();
-      } else {
-        liff.login();
-      }
-      // live preview เมื่อพิมพ์ (หน่วงเล็กน้อย)
-      let t = null;
-      document.getElementById('flexjson').addEventListener('input', () => {
-        clearTimeout(t);
-        t = setTimeout(safePreview, 300);
-      });
+      if (liff.isLoggedIn()) { safePreview(); } else { liff.login(); }
+      let t=null; document.getElementById('flexjson').addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(safePreview,300); });
     }
     main();
   </script>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-
-
-
