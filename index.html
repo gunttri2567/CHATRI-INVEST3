@@ -9,7 +9,6 @@
 
   <style>
     body { padding: 20px; }
-    /* พื้นที่พรีวิวให้ดูคล้ายหน้าจอมือถือ */
     #previewArea {
       border: 1px solid #ddd;
       border-radius: 16px;
@@ -100,7 +99,7 @@
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    // ---------- Utility: ----------
+    // ---------- Utility ----------
     function applyCommonStyle(el, node = {}) {
       if (!node) return;
       if (node.margin) el.style.marginTop = mapSpacing(node.margin);
@@ -175,7 +174,7 @@
       const alt = document.getElementById("altText").value.trim() || "Flex Preview";
       let parsed; try { parsed = JSON.parse(raw); } catch { return "failed"; }
       if (parsed.type === 'flex' && parsed.contents) {
-        if (!parsed.altText) parsed.altText = alt;
+        parsed.altText = alt;
         return parsed;
       }
       if (parsed.type === 'bubble' || parsed.type === 'carousel') {
@@ -186,21 +185,31 @@
     function myFunction(){ return buildFlexMessageFromTextarea(); }
 
     function saveShare() {
-      var sflex = document.getElementById("flexjson").value;
-      let code = window.btoa(sflex);
+      const msg = buildFlexMessageFromTextarea();
+      if (msg === "failed") { alert("JSON ไม่ถูกต้อง"); return; }
+      let code = window.btoa(JSON.stringify(msg));
       let lid = "lid" + Date.now();
       document.getElementById("demo").value = "https://liff.line.me/2000581772-J4jdMX8q/?flexid=" + lid;
       const xurl = "https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec";
       var xmlhttp=new XMLHttpRequest();
-      xmlhttp.open("POST",xurl); xmlhttp.setRequestHeader("Content-Type","application/json;charset=UTF-8");
+      xmlhttp.open("POST",xurl);
+      xmlhttp.setRequestHeader("Content-Type","application/json;charset=UTF-8");
       xmlhttp.send(JSON.stringify({ "lid": lid, "desc": code }));
-      xmlhttp.onreadystatechange=function(){ if(this.readyState==4&&this.status==200){ var jsonResponse=JSON.parse(this.responseText); alert("บันทึกแล้ว: "+jsonResponse.desc); } }
+      xmlhttp.onreadystatechange=function(){
+        if(this.readyState==4&&this.status==200){
+          var jsonResponse=JSON.parse(this.responseText);
+          alert("บันทึกแล้ว: "+jsonResponse.desc);
+        }
+      }
     }
     async function sendShare() {
       const msg = buildFlexMessageFromTextarea();
       if (msg === "failed") { alert("JSON ไม่ถูกต้อง"); return; }
-      try { const result = await liff.shareTargetPicker([msg]); if (result) alert(`[${result.status}] Message sent!`); else alert("ShareTargetPicker ถูกยกเลิก"); }
-      catch(e){ console.error(e); alert("แชร์ไม่สำเร็จ"); }
+      try {
+        const result = await liff.shareTargetPicker([msg]);
+        if (result) alert(`[${result.status}] Message sent!`);
+        else alert("ShareTargetPicker ถูกยกเลิก");
+      } catch(e){ console.error(e); alert("แชร์ไม่สำเร็จ"); }
     }
     function copyUrl(){ let copyText=document.getElementById("demo"); copyText.select(); document.execCommand("copy"); alert("Copied URL: "+copyText.value); }
     function previewFlex(){ const preview=document.getElementById('previewArea'); try{ renderFlexTo(preview); }catch(e){ preview.innerHTML=`<p class="text-danger">${e.message}</p>`; } }
@@ -210,7 +219,8 @@
     async function main() {
       await liff.init({ liffId: "2000581772-J4jdMX8q" });
       if (liff.isLoggedIn()) { safePreview(); } else { liff.login(); }
-      let t=null; document.getElementById('flexjson').addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(safePreview,300); });
+      let t=null;
+      document.getElementById('flexjson').addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(safePreview,300); });
     }
     main();
   </script>
