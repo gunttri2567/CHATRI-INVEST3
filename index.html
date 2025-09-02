@@ -211,7 +211,7 @@
 
       if (flexid) {
         try {
-          const res = await fetch("https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec?lid=" + flexid);
+          const res = await fetch("https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec?flexid=" + flexid);
           const data = await res.json();
           const jsonStr = atob(data.desc);
           document.getElementById("flexjson").value = jsonStr;
@@ -235,3 +235,4 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
