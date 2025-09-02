@@ -9,7 +9,6 @@
 
   <style>
     body { padding: 20px; }
-    /* พื้นที่พรีวิวให้ดูคล้ายหน้าจอมือถือ */
     #previewArea {
       border: 1px solid #ddd;
       border-radius: 16px;
@@ -52,7 +51,7 @@
       <div class="mb-2">
         <label for="flexjson" class="form-label">JSON</label>
         <a href="https://developers.line.biz/flex-simulator" target="_blank" class="link-info ms-2">FLEX MESSAGE SIMULATOR</a>
-        <textarea class="form-control" id="flexjson" name="flexjson" rows="20" onchange="myFunction()">{
+        <textarea class="form-control" id="flexjson" name="flexjson" rows="20">{
   "type": "bubble",
   "size": "giga",
   "hero": {
@@ -69,19 +68,16 @@
 }</textarea>
       </div>
 
-      <!-- ช่อง altText -->
       <div class="mb-2">
         <label for="altText" class="form-label">altText</label>
         <input type="text" class="form-control" id="altText" placeholder="ข้อความสั้น ๆ ที่จะแสดงแทน Flex Message">
       </div>
 
-      <!-- ช่องแสดง URL -->
       <div class="input-group mb-3">
         <input type="text" class="form-control" id="demo" placeholder="Ctrl+C > Copy liff url.">
         <button class="btn btn-outline-secondary" type="button" onclick="copyUrl()">Copy</button>
       </div>
 
-      <!-- ปุ่มต่าง ๆ -->
       <div class="d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-success" onclick="saveShare()">Save liff</button>
         <button type="button" class="btn btn-success" onclick="sendShare()">Share Target Picker</button>
@@ -100,7 +96,7 @@
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    // ---------- Utility: ----------
+    // ---------- Utility ----------
     function applyCommonStyle(el, node = {}) {
       if (!node) return;
       if (node.margin) el.style.marginTop = mapSpacing(node.margin);
@@ -183,8 +179,6 @@
       }
       return "failed";
     }
-    function myFunction(){ return buildFlexMessageFromTextarea(); }
-
     function saveShare() {
       var sflex = document.getElementById("flexjson").value;
       let code = window.btoa(sflex);
@@ -209,8 +203,31 @@
     // ---------- LIFF Init ----------
     async function main() {
       await liff.init({ liffId: "2000581772-J4jdMX8q" });
-      if (liff.isLoggedIn()) { safePreview(); } else { liff.login(); }
-      let t=null; document.getElementById('flexjson').addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(safePreview,300); });
+      if (!liff.isLoggedIn()) { liff.login(); }
+
+      // อ่านค่า flexid จาก query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const flexid = urlParams.get('flexid');
+
+      if (flexid) {
+        try {
+          const res = await fetch("https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec?lid=" + flexid);
+          const data = await res.json();
+          const jsonStr = atob(data.desc);
+          document.getElementById("flexjson").value = jsonStr;
+          safePreview();
+        } catch (e) {
+          console.error("โหลด JSON ไม่สำเร็จ", e);
+        }
+      } else {
+        safePreview();
+      }
+
+      let t=null;
+      document.getElementById('flexjson').addEventListener('input',()=>{
+        clearTimeout(t); 
+        t=setTimeout(safePreview,300);
+      });
     }
     main();
   </script>
@@ -218,6 +235,3 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-
-
