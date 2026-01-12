@@ -1,145 +1,226 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHATRI AYA</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
+  <title>CHATRI AYA</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<style>
-body { padding:20px }
-#previewArea {
-  border:1px solid #ddd;border-radius:16px;
-  padding:12px;background:#f5f7fb;
-  min-height:420px;max-width:380px
-}
-.flex-bubble{background:#fff;border-radius:16px;overflow:hidden;
-box-shadow:0 6px 14px rgba(0,0,0,.08);margin-bottom:16px}
-</style>
+  <style>
+    body { padding: 20px; }
+    /* พื้นที่พรีวิวให้ดูคล้ายหน้าจอมือถือ */
+    #previewArea {
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 12px;
+      background: #f5f7fb;
+      min-height: 420px;
+      max-width: 380px;
+      overflow: auto;
+    }
+    .flex-bubble {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    .flex-hero img { width: 100%; display: block; }
+    .section { padding: 12px; }
+    .flex-footer { border-top: 1px solid #eee; }
+    .box { display: flex; gap: 8px; }
+    .box.vertical { flex-direction: column; }
+    .box.horizontal { flex-direction: row; align-items: center; }
+    .box.baseline { flex-direction: row; align-items: baseline; }
+    .text { word-break: break-word; line-height: 1.4; }
+    .t-xs{font-size:12px;} .t-sm{font-size:14px;} .t-md{font-size:16px;}
+    .t-lg{font-size:18px;} .t-xl{font-size:20px;} .t-xxl{font-size:22px;}
+    .btn-flex { display:inline-block; padding:10px 14px; border-radius:10px; text-decoration:none; border:1px solid #0d6efd; color:#0d6efd; }
+    .btn-flex.primary { background:#0d6efd; color:#fff; border-color:#0d6efd; }
+    .btn-flex.link { border: none; padding: 0; color:#0d6efd; }
+    .sep { border-top:1px solid #e5e7eb; margin:6px 0; }
+    .icon { width: 20px; height: 20px; display:inline-block; }
+  </style>
 </head>
-
 <body>
-<div class="row g-3">
+  <div class="row g-3">
+    <!-- ======= ฟอร์ม ======= -->
+    <div class="col-md-6">
+      <h4>Flex Form</h4>
 
-<div class="col-md-6">
-<h4>Flex Form</h4>
-
-<textarea class="form-control mb-2" id="flexjson" rows="18"></textarea>
-
-<input class="form-control mb-2" id="altText" placeholder="altText">
-
-<div class="input-group mb-3">
-<input class="form-control" id="demo" readonly>
-<button class="btn btn-outline-secondary" onclick="copyUrl()">Copy</button>
-</div>
-
-<div class="d-flex gap-2">
-<button class="btn btn-success" onclick="saveFlex()">Save liff</button>
-<button class="btn btn-success" onclick="sendShare()">Share Target Picker</button>
-<button class="btn btn-warning" onclick="previewFlex()">Preview</button>
-</div>
-</div>
-
-<div class="col-md-6">
-<h4>Preview</h4>
-<div id="previewArea"></div>
-</div>
-
-</div>
-
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-<script>
-/* ===== CONFIG ===== */
-const LIFF_ID = "2000581772-J4jdMX8q";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec";
-
-/* ===== UTIL ===== */
-const qs = new URLSearchParams(location.search);
-let CURRENT_LID = qs.get("flexid");
-
-/* ===== LOAD FLEX ===== */
-async function loadFlex() {
-  if (!CURRENT_LID) return;
-
-  const r = await fetch(`${GAS_URL}?flexid=${CURRENT_LID}`);
-  const j = await r.json();
-
-  if (j.status !== "success") return;
-
-  document.getElementById("flexjson").value = j.decoded;
-  document.getElementById("altText").value = j.altText || "";
-
-  previewFlex();
-}
-
-/* ===== SAVE ===== */
-async function saveFlex() {
-  const raw = flexjson.value.trim();
-  const alt = altText.value || "Flex";
-
-  if (!CURRENT_LID) {
-    CURRENT_LID = "FLEX_" + Date.now();
+      <div class="mb-2">
+        <label for="flexjson" class="form-label">JSON</label>
+        <a href="https://developers.line.biz/flex-simulator" target="_blank" class="link-info ms-2">FLEX MESSAGE SIMULATOR</a>
+        <textarea class="form-control" id="flexjson" name="flexjson" rows="20" onchange="myFunction()">{
+  "type": "bubble",
+  "size": "giga",
+  "hero": {
+    "type": "image",
+    "url": "https://raw.githubusercontent.com/gunttri2567/triliff2025/refs/heads/branch/images/1035089.jpg",
+    "size": "full",
+    "aspectRatio": "1108:1478",
+    "aspectMode": "cover",
+    "action": {
+      "type": "uri",
+      "uri": "https://raw.githubusercontent.com/gunttri2567/triliff2025/refs/heads/branch/images/1035089.jpg"
+    }
   }
+}</textarea>
+      </div>
 
-  const base64 = btoa(unescape(encodeURIComponent(raw)));
-  const liffUrl = `https://liff.line.me/${LIFF_ID}?flexid=${CURRENT_LID}`;
+      <!-- ช่อง altText -->
+      <div class="mb-2">
+        <label for="altText" class="form-label">altText</label>
+        <input type="text" class="form-control" id="altText" placeholder="ข้อความสั้น ๆ ที่จะแสดงแทน Flex Message">
+      </div>
 
-  const r = await fetch(GAS_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      lid: CURRENT_LID,
-      desc: base64,
-      altText: alt,
-      liffUrl: liffUrl
-    })
-  });
+      <!-- ช่องแสดง URL -->
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" id="demo" placeholder="Ctrl+C > Copy liff url.">
+        <button class="btn btn-outline-secondary" type="button" onclick="copyUrl()">Copy</button>
+      </div>
 
-  const j = await r.json();
-  if (j.status === "success") {
-    demo.value = liffUrl;
-    alert("✅ บันทึกเรียบร้อย");
-  } else {
-    alert("❌ Save failed");
-  }
-}
+      <!-- ปุ่มต่าง ๆ -->
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-success" onclick="saveShare()">Save liff</button>
+        <button type="button" class="btn btn-success" onclick="sendShare()">Share Target Picker</button>
+        <button type="button" class="btn btn-warning" onclick="previewFlex()">Preview Flex</button>
+      </div>
+      <small class="text-muted d-block mt-2">* ปุ่ม Preview จะเรนเดอร์จาก JSON ที่อยู่ในช่อง textarea ตรง ๆ ทุกครั้ง</small>
+    </div>
 
-/* ===== SHARE ===== */
-async function sendShare() {
-  const json = JSON.parse(flexjson.value);
-  const alt = altText.value || "Flex";
+    <!-- ======= Preview ======= -->
+    <div class="col-md-6">
+      <h4>Preview</h4>
+      <div id="previewArea"><p class="text-muted">ยังไม่มี preview</p></div>
+    </div>
+  </div>
 
-  await liff.shareTargetPicker([{
-    type:"flex",
-    altText:alt,
-    contents:json
-  }]);
-}
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    // ---------- Utility: ----------
+    function applyCommonStyle(el, node = {}) {
+      if (!node) return;
+      if (node.margin) el.style.marginTop = mapSpacing(node.margin);
+      if (node.backgroundColor) el.style.backgroundColor = node.backgroundColor;
+      if (node.color) el.style.color = node.color;
+      if (node.align) el.style.textAlign = node.align;
+      if (node.gravity) {
+        if (node.gravity === 'center') el.style.alignSelf = 'center';
+        if (node.gravity === 'bottom') el.style.alignSelf = 'flex-end';
+      }
+      if (node.action && node.action.type === 'uri') {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', () => window.open(node.action.uri, '_blank'));
+      }
+    }
+    function mapTextSize(size) {
+      const m = { xs:'t-xs', sm:'t-sm', md:'t-md', lg:'t-lg', xl:'t-xl', xxl:'t-xxl' };
+      return m[size] || 't-md';
+    }
+    function mapSpacing(sp) {
+      const m = { none:'0px', xs:'4px', sm:'6px', md:'8px', lg:'12px', xl:'16px', xxl:'20px' };
+      return m[sp] || '8px';
+    }
+    function objFit(mode) { return mode === 'contain' ? 'contain' : 'cover'; }
 
-/* ===== PREVIEW (ง่าย ๆ) ===== */
-function previewFlex() {
-  previewArea.innerHTML =
-    "<pre style='font-size:12px'>" +
-    JSON.stringify(JSON.parse(flexjson.value), null, 2) +
-    "</pre>";
-}
+    // ---------- Render Flex ----------
+    function renderFromTextarea() {
+      const raw = document.getElementById('flexjson').value.trim();
+      let json;
+      try { json = JSON.parse(raw); } catch { throw new Error('JSON ไม่ถูกต้อง'); }
+      if (json.type === 'flex' && json.contents) return json.contents;
+      if (json.type === 'bubble' || json.type === 'carousel') return json;
+      throw new Error('รองรับเฉพาะ bubble / carousel หรือ message.type="flex"');
+    }
+    function renderFlexTo(preview) {
+      preview.innerHTML = '';
+      const contents = renderFromTextarea();
+      if (contents.type === 'carousel') {
+        (contents.contents || []).forEach(bubble => preview.appendChild(renderBubble(bubble)));
+      } else if (contents.type === 'bubble') {
+        preview.appendChild(renderBubble(contents));
+      } else {
+        preview.innerHTML = "<p class='text-danger'>ชนิดไม่รองรับ</p>";
+      }
+    }
+    function renderBubble(bubble) {
+      const wrap = document.createElement('div'); wrap.className = 'flex-bubble';
+      if (bubble.hero) wrap.appendChild(renderComponent(bubble.hero, true));
+      if (bubble.header) { const sec = document.createElement('div'); sec.className = 'section'; sec.appendChild(renderComponent(bubble.header)); wrap.appendChild(sec); }
+      if (bubble.body) { const sec = document.createElement('div'); sec.className = 'section'; sec.appendChild(renderComponent(bubble.body)); wrap.appendChild(sec); }
+      if (bubble.footer) { const sec = document.createElement('div'); sec.className = 'section flex-footer'; sec.appendChild(renderComponent(bubble.footer)); wrap.appendChild(sec); }
+      return wrap;
+    }
+    function renderComponent(node, isHero = false) {
+      if (!node) return document.createDocumentFragment();
+      switch (node.type) {
+        case 'box': { const d=document.createElement('div'); d.className=`box ${node.layout||'vertical'}`; applyCommonStyle(d,node); (node.contents||[]).forEach(ch=>d.appendChild(renderComponent(ch))); return d; }
+        case 'text': { const t=document.createElement('div'); t.className=`text ${mapTextSize(node.size)}`; t.textContent=node.text??''; if(node.weight==='bold')t.style.fontWeight='700'; if(node.align)t.style.textAlign=node.align; if(node.wrap===true)t.style.whiteSpace='normal'; else t.style.whiteSpace='nowrap'; if(node.decoration==='underline')t.style.textDecoration='underline'; applyCommonStyle(t,node); return t; }
+        case 'image': { const c=document.createElement('div'); if(isHero)c.className='flex-hero'; const img=document.createElement('img'); img.src=node.url; img.loading='lazy'; img.style.width='100%'; img.style.objectFit=objFit(node.aspectMode); applyCommonStyle(img,node); if(node.action&&node.action.type==='uri'){img.style.cursor='pointer'; img.addEventListener('click',()=>window.open(node.action.uri,'_blank'));} c.appendChild(img); return c; }
+        case 'button': { const a=document.createElement('a'); const label=(node.action&&node.action.label)?node.action.label:(node.label||'Button'); a.textContent=label; a.href=(node.action&&node.action.uri)?node.action.uri:'javascript:void(0)'; a.target='_blank'; const style=(node.style||'secondary').toLowerCase(); a.className=`btn-flex ${style==='primary'?'primary':(style==='link'?'link':'')}`; applyCommonStyle(a,node); return a; }
+        case 'separator': { const hr=document.createElement('div'); hr.className='sep'; applyCommonStyle(hr,node); return hr; }
+        case 'spacer': { const sp=document.createElement('div'); const map={xs:4,sm:6,md:8,lg:12,xl:16,xxl:20}; sp.style.height=(map[node.size]||8)+'px'; return sp; }
+        case 'filler': { const f=document.createElement('div'); f.style.flex='1 1 auto'; return f; }
+        case 'icon': { const i=document.createElement('img'); i.className='icon'; i.src=node.url; return i; }
+        default: { const pre=document.createElement('pre'); pre.textContent=`[unsupported ${node.type}]`; pre.style.fontSize='12px'; pre.style.color='#999'; return pre; }
+      }
+    }
 
-function copyUrl() {
-  demo.select();
-  document.execCommand("copy");
-}
+    // ---------- AltText + Share ----------
+    function buildFlexMessageFromTextarea() {
+      const raw = document.getElementById("flexjson").value;
+      const alt = document.getElementById("altText").value.trim() || "Flex Preview";
+      let parsed; try { parsed = JSON.parse(raw); } catch { return "failed"; }
+      if (parsed.type === 'flex' && parsed.contents) {
+        if (!parsed.altText) parsed.altText = alt;
+        return parsed;
+      }
+      if (parsed.type === 'bubble' || parsed.type === 'carousel') {
+        return { type: 'flex', altText: alt, contents: parsed };
+      }
+      return "failed";
+    }
+    function myFunction(){ return buildFlexMessageFromTextarea(); }
 
-/* ===== LIFF INIT ===== */
-async function main() {
-  await liff.init({ liffId: LIFF_ID });
-  if (!liff.isLoggedIn()) return liff.login();
-  loadFlex();
-}
-main();
-</script>
+    function saveShare() {
+      var sflex = document.getElementById("flexjson").value;
+      let code = window.btoa(sflex);
+      let lid = "lid" + Date.now();
+      document.getElementById("demo").value = "https://liff.line.me/2000581772-J4jdMX8q/?flexid=" + lid;
+      const xurl = "https://script.google.com/macros/s/AKfycbwktB_ZSm_VDDImG85Q4abmjDcBGHQqusr4PMsoWlT1d9fsADr6NaaM81uBnqq4exVL/exec";
+      var xmlhttp=new XMLHttpRequest();
+      xmlhttp.open("POST",xurl); xmlhttp.setRequestHeader("Content-Type","application/json;charset=UTF-8");
+      xmlhttp.send(JSON.stringify({ "lid": lid, "desc": code }));
+      xmlhttp.onreadystatechange=function(){ if(this.readyState==4&&this.status==200){ var jsonResponse=JSON.parse(this.responseText); alert("บันทึกแล้ว: "+jsonResponse.desc); } }
+    }
+    async function sendShare() {
+      const msg = buildFlexMessageFromTextarea();
+      if (msg === "failed") { alert("JSON ไม่ถูกต้อง"); return; }
+      try { const result = await liff.shareTargetPicker([msg]); if (result) alert(`[${result.status}] Message sent!`); else alert("ShareTargetPicker ถูกยกเลิก"); }
+      catch(e){ console.error(e); alert("แชร์ไม่สำเร็จ"); }
+    }
+    function copyUrl(){ let copyText=document.getElementById("demo"); copyText.select(); document.execCommand("copy"); alert("Copied URL: "+copyText.value); }
+    function previewFlex(){ const preview=document.getElementById('previewArea'); try{ renderFlexTo(preview); }catch(e){ preview.innerHTML=`<p class="text-danger">${e.message}</p>`; } }
+    function safePreview(){ const preview=document.getElementById('previewArea'); try{ renderFlexTo(preview); } catch(e){ preview.innerHTML=`<p class="text-muted">พิมพ์/วาง JSON แล้วกด Preview</p>`; } }
 
+    // ---------- LIFF Init ----------
+    async function main() {
+      await liff.init({ liffId: "2000581772-J4jdMX8q" });
+      if (liff.isLoggedIn()) { safePreview(); } else { liff.login(); }
+      let t=null; document.getElementById('flexjson').addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(safePreview,300); });
+    }
+    main();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
+
+
 
