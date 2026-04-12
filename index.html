@@ -39,6 +39,13 @@
     .btn-flex.link { border: none; padding: 0; color:#0d6efd; }
     .sep { border-top:1px solid #e5e7eb; margin:6px 0; }
     .icon { width: 20px; height: 20px; display:inline-block; }
+    .help-note {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 4px;
+      display: block;
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
@@ -82,6 +89,19 @@
       <div class="mb-2" id="carouselCountWrap" style="display:none;">
         <label for="carouselCount" class="form-label">จำนวน Bubble ใน Carousel</label>
         <input type="number" class="form-control" id="carouselCount" value="2" min="2" max="12">
+        <small class="help-note">ใช้เมื่อไม่ได้กรอก URL หลายรูปด้านล่าง ระบบจะ clone bubble เดิมตามจำนวนนี้</small>
+      </div>
+
+      <div class="mb-2" id="carouselImagesWrap" style="display:none;">
+        <label for="carouselImages" class="form-label">URL รูปภาพสำหรับ Carousel (1 บรรทัด = 1 รูป)</label>
+        <textarea class="form-control" id="carouselImages" rows="6" placeholder="https://example.com/1.jpg&#10;https://example.com/2.jpg&#10;https://example.com/3.jpg"></textarea>
+        <small class="help-note">ถ้ากรอกหลายรูป ระบบจะสร้าง Bubble ตามจำนวนรูป และแทนที่ hero.url ของแต่ละ Bubble ให้อัตโนมัติ</small>
+      </div>
+
+      <div class="mb-2" id="carouselLinksWrap" style="display:none;">
+        <label for="carouselLinks" class="form-label">ลิงก์คลิกของแต่ละ Bubble (1 บรรทัด = 1 ลิงก์)</label>
+        <textarea class="form-control" id="carouselLinks" rows="6" placeholder="https://your-link.com/a&#10;https://your-link.com/b&#10;https://your-link.com/c"></textarea>
+        <small class="help-note">ถ้าไม่กรอก ระบบจะใช้ URL รูปภาพของแต่ละ Bubble เป็นลิงก์คลิกแทน</small>
       </div>
 
       <div class="input-group mb-3">
@@ -94,7 +114,7 @@
         <button type="button" class="btn btn-success" onclick="sendShare()">Share Target Picker</button>
         <button type="button" class="btn btn-warning" onclick="previewFlex()">Preview Flex</button>
       </div>
-      <small class="text-muted d-block mt-2">* ปุ่ม Preview จะเรนเดอร์จาก JSON ที่อยู่ในช่อง textarea ตรง ๆ ตามโหมดที่เลือก</small>
+      <small class="text-muted d-block mt-2">* ปุ่ม Preview จะเรนเดอร์จาก JSON ที่อยู่ในช่อง textarea ตามโหมดที่เลือก</small>
     </div>
 
     <div class="col-md-6">
@@ -158,6 +178,58 @@
       }
     }
 
+    function getTextareaLines(id) {
+      const raw = document.getElementById(id)?.value || '';
+      return raw
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function getCarouselImageUrls() {
+      return getTextareaLines('carouselImages');
+    }
+
+    function getCarouselClickUrls() {
+      return getTextareaLines('carouselLinks');
+    }
+
+    function ensureHeroExists(cloned) {
+      if (!cloned.hero) {
+        cloned.hero = {
+          type: 'image',
+          url: '',
+          size: 'full',
+          aspectRatio: '1:1',
+          aspectMode: 'cover',
+          action: {
+            type: 'uri',
+            uri: ''
+          }
+        };
+      }
+
+      if (cloned.hero.type !== 'image') {
+        cloned.hero.type = 'image';
+      }
+
+      if (!cloned.hero.action || cloned.hero.action.type !== 'uri') {
+        cloned.hero.action = {
+          type: 'uri',
+          uri: ''
+        };
+      }
+
+      return cloned;
+    }
+
+    function setBubbleImageAndLink(bubble, imageUrl, clickUrl) {
+      const cloned = ensureHeroExists(deepClone(bubble));
+      cloned.hero.url = imageUrl;
+      cloned.hero.action.uri = clickUrl || imageUrl;
+      return cloned;
+    }
+
     function normalizeFlexContentsByMode(json) {
       const mode = getMode();
       let base = deepClone(json);
@@ -182,11 +254,32 @@
         }
 
         if (base.type === 'bubble') {
+          const imageUrls = getCarouselImageUrls();
+          const clickUrls = getCarouselClickUrls();
           const count = getCarouselCount();
           const arr = [];
-          for (let i = 0; i < count; i++) {
-            arr.push(deepClone(base));
+
+          if (imageUrls.length > 0) {
+            imageUrls.slice(0, 12).forEach((img, idx) => {
+              const clickUrl = clickUrls[idx] || img;
+              arr.push(setBubbleImageAndLink(base, img, clickUrl));
+            });
+          } else {
+            for (let i = 0; i < count; i++) {
+              const cloned = deepClone(base);
+              if (cloned.hero && cloned.hero.type === 'image') {
+                const originalImg = cloned.hero.url || '';
+                const clickUrl = clickUrls[i] || (cloned.hero.action && cloned.hero.action.uri) || originalImg;
+                if (!cloned.hero.action || cloned.hero.action.type !== 'uri') {
+                  cloned.hero.action = { type: 'uri', uri: clickUrl };
+                } else {
+                  cloned.hero.action.uri = clickUrl;
+                }
+              }
+              arr.push(cloned);
+            }
           }
+
           return {
             type: 'carousel',
             contents: arr
@@ -355,7 +448,6 @@
       if (parsed.type === 'flex' && parsed.contents) {
         const converted = normalizeFlexContentsByMode(parsed);
         if (!converted) return "failed";
-
         parsed.contents = converted;
         parsed.altText = alt;
         return parsed;
@@ -403,7 +495,7 @@
           var jsonResponse = JSON.parse(this.responseText);
           alert("บันทึกแล้ว: " + jsonResponse.desc);
         }
-      }
+      };
     }
 
     async function sendShare() {
@@ -448,33 +540,69 @@
       }
     }
 
-    async function main() {
-      await liff.init({ liffId: "2000581772-J4jdMX8q" });
+    function updateModeUI() {
+      const modeEl = document.getElementById('flexMode');
+      const countWrap = document.getElementById('carouselCountWrap');
+      const imagesWrap = document.getElementById('carouselImagesWrap');
+      const linksWrap = document.getElementById('carouselLinksWrap');
 
-      if (liff.isLoggedIn()) {
-        safePreview();
-      } else {
-        liff.login();
-      }
+      if (!modeEl || !countWrap || !imagesWrap || !linksWrap) return;
 
+      const isCarousel = modeEl.value === 'carousel';
+
+      countWrap.style.display = isCarousel ? 'block' : 'none';
+      imagesWrap.style.display = isCarousel ? 'block' : 'none';
+      linksWrap.style.display = isCarousel ? 'block' : 'none';
+    }
+
+    function bindEvents() {
       let t = null;
+
       document.getElementById('flexjson').addEventListener('input', () => {
         clearTimeout(t);
         t = setTimeout(safePreview, 300);
       });
 
       document.getElementById('flexMode').addEventListener('change', function() {
-        const wrap = document.getElementById('carouselCountWrap');
-        wrap.style.display = this.value === 'carousel' ? 'block' : 'none';
+        updateModeUI();
         safePreview();
       });
 
       document.getElementById('carouselCount').addEventListener('input', function() {
         if (getMode() === 'carousel') safePreview();
       });
+
+      document.getElementById('carouselImages').addEventListener('input', function() {
+        if (getMode() === 'carousel') safePreview();
+      });
+
+      document.getElementById('carouselLinks').addEventListener('input', function() {
+        if (getMode() === 'carousel') safePreview();
+      });
     }
 
-    main();
+    async function main() {
+      // ให้ UI พร้อมก่อน ไม่ต้องรอ LIFF
+      updateModeUI();
+      bindEvents();
+      safePreview();
+
+      try {
+        await liff.init({ liffId: "2000581772-J4jdMX8q" });
+
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        updateModeUI();
+        safePreview();
+      } catch (e) {
+        console.error('LIFF init failed:', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', main);
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
